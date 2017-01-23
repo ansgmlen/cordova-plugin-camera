@@ -285,19 +285,22 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
     public void takePicture(int returnType, int encodingType)
     {
         // Save the number of images currently on disk for later
-        this.numPics = queryImgDB(whichContentStore()).getCount();
+        this.numPics = 0; //queryImgDB(whichContentStore()).getCount(); <-- this line blocks by AppConnect
 
         // Let's use the intent and see what happens
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
         // Specify file so that large image is captured and returned
         File photo = createCaptureFile(encodingType);
-        this.imageUri = new CordovaUri(FileProvider.getUriForFile(cordova.getActivity(),
-                applicationId + ".provider",
-                photo));
+        //this.imageUri = new CordovaUri(FileProvider.getUriForFile(cordova.getActivity(),
+        //        applicationId + ".provider",
+        //        photo));
+        
+        this.imageUri = new CordovaUri(Uri.fromFile(photo)); //<--Added: get uri from file without using FileProvider. Because MI blocks FileProvider
+           
         intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageUri.getCorrectUri());
         //We can write to this URI, this will hopefully allow us to write files to get to the next step
-        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        //intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION); <-- MI blocks FLAG_GRANT_WRITE_URI_PERMISSION permission
 
         if (this.cordova != null) {
             // Let's check to make sure the camera is actually installed. (Legacy Nexus 7 code)
@@ -525,7 +528,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             this.processPicture(bitmap, this.encodingType);
 
             if (!this.saveToPhotoAlbum) {
-                checkForDuplicateImage(DATA_URL);
+                //checkForDuplicateImage(DATA_URL); <-- AppConnect blocks so commented out.
             }
         }
 
@@ -794,10 +797,12 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             if (resultCode == Activity.RESULT_OK) {
                 try {
                     if (this.allowEdit) {
+                        /* AppConnect blocks FileProvider so commented out here
                         Uri tmpFile = FileProvider.getUriForFile(cordova.getActivity(),
                                 applicationId + ".provider",
                                 createCaptureFile(this.encodingType));
                         performCrop(tmpFile, destType, intent);
+                        */
                     } else {
                         this.processResultFromCamera(destType, intent);
                     }
@@ -1187,7 +1192,8 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         // Clean up initial camera-written image file.
         (new File(FileHelper.stripFileProtocol(oldImage.toString()))).delete();
 
-        checkForDuplicateImage(imageType);
+        //checkForDuplicateImage(imageType);  <-- AppConnect blocks queryDB so commented out
+           
         // Scan for the gallery to update pic refs in gallery
         if (this.saveToPhotoAlbum && newImage != null) {
             this.scanForGallery(newImage);
