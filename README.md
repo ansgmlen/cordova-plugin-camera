@@ -47,9 +47,6 @@ This requires cordova 5.0+
 
     cordova plugin add https://github.com/ansgmlen/cordova-plugin-camera
 
-It is also possible to install via repo url directly ( unstable )
-
-    cordova plugin add https://github.com/ansgmlen/cordova-plugin-camera
 
 
 ## How to Contribute
